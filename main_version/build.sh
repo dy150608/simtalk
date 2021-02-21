@@ -1,5 +1,6 @@
 #!/bin/bash
 ROOT="/simtalk"
+CURR_ROOT=$(pwd)
 
 build_debug()
 {
@@ -24,9 +25,24 @@ options:
 
 environment()
 {
-	if [ -e $ROOT ]; then
-		mkdir $ROOT; cd $ROOT
-	fi
+if [ -e $ROOT ]; then
+	mkdir $ROOT; cd $ROOT
+fi
+#gcc include path
+C_INCLUDE_PATH=$(C_INCLUDE_PATH):$(CURR_ROOT)
+export C_INCLUDE_PATH
+
+#g++ include path
+CPLUS_INCLUDE_PATH=$(CPLUS_INCLUDE_PATH):$(CURR_ROOT)
+export CPLUS_INCLUDE_PATH
+
+#dynamic link library path
+LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURR_ROOT)
+export LD_LIBRARY_PATH
+
+#static library path
+LIBRARY_PATH=$(LIBRARY_PATH):$(CURR_ROOT)
+export LIBRARY_PATH
 }
 
 #build begin
