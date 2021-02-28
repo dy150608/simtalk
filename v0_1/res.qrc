@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/imgs">
+        <file>res/images/find.PNG</file>
+    </qresource>
+</RCC>

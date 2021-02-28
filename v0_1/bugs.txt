@@ -1,0 +1,1 @@
+1. for_simeple.hpp -> 将ERROR定义为宏函数编译出错
