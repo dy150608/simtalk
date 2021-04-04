@@ -1,18 +1,9 @@
-#!/bin/bash
-include comm/common.mk
+#!/bin/sh
 
-TARGET=APP
-SUBDIRS=server
-CLEANSUBDIRS=$(addprefix clean, ${SUBDIRS})
+AIM:=DIR
+TARGET:=
+DEPENDS:=comm server
+EXTRA:=
 
-.PHONY:${TARGET} ${SUBDIRS}
-${TARGET}:${SUBDIRS}
-${SUBDIRS}:
-	@echo $@
-#${call testfunc}
-	${MAKE} -C $@
-
-.PHONY:clean ${CLEANSUBDIRS}
-clean:${CLEANSUBDIRS}
-${CLEANSUBDIRS}:
-	${MAKE} -C $@
+export MAKE_COMMON=$(shell pwd)/common.mk
+include $(MAKE_COMMON)

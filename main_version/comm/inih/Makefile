@@ -1,9 +1,8 @@
 #!/bin/bash
-#include comm/common.mk
 
-AIM:=DIR
+AIM:=
 TARGET:=
-DEPENDS:=easylog
+DEPENDS:=
 EXTRA:=
 
 include $(MAKE_COMMON)

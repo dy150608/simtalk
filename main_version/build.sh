@@ -1,17 +1,23 @@
 #!/bin/bash
-ROOT="/simtalk"
-CURR_ROOT=$(pwd)
 
 build_debug()
 {
-	export BUILD="debug"
+	source devenv
+	export BUILD="DEBUG"
 	make -f Makefile
 }
 
 build_release()
 {
-	export BUILD="release"
+	source devenv
+	export BUILD="RELEASE"
 	make -f Makefile
+}
+
+build_clean()
+{
+	source devenv
+	make -f Makefile clean
 }
 
 use_case()
@@ -23,41 +29,23 @@ options:
 	others: cannot build"
 }
 
-environment()
-{
-if [ -e $ROOT ]; then
-	mkdir $ROOT; cd $ROOT
-fi
-#gcc include path
-C_INCLUDE_PATH=$(C_INCLUDE_PATH):$(CURR_ROOT)
-export C_INCLUDE_PATH
-
-#g++ include path
-CPLUS_INCLUDE_PATH=$(CPLUS_INCLUDE_PATH):$(CURR_ROOT)
-export CPLUS_INCLUDE_PATH
-
-#dynamic link library path
-LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURR_ROOT)
-export LD_LIBRARY_PATH
-
-#static library path
-LIBRARY_PATH=$(LIBRARY_PATH):$(CURR_ROOT)
-export LIBRARY_PATH
-}
-
-#build begin
-
-environment
+#build.sh begin
 
 case $1 in
+	"prepare")
+		source devenv
+	;;
 	"debug")
 		build_debug
 	;;
 	"release")
 		build_release
 	;;
+	"clean")
+		build_clean
+	;;
 	*)
 		use_case
 esac
 
-#build end
+#build.sh end

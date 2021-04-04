@@ -1,15 +1,9 @@
 #!/bin/bash
 #include comm/common.mk
 
-TARGET=
-SUBDIRS=module
+AIM:=DIR
+TARGET:=
+DEPENDS:=module
+EXTRA:=
 
-.PHONY:subdir $(SUBDIRS)
-subdir:${SUBDIRS}
-	@echo subdir
-	${call testfunc}
-	${MAKE} -C $@
-
-.PHONY:clean ${SUBDIRS}
-clean:
-	${MAKE} -C $@
+include $(MAKE_COMMON)
