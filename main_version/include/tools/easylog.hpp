@@ -1,8 +1,7 @@
 #ifndef _EASYLOG_
 #define _EASYLOG_
 
-#include <iostream>
-#include <ofstream>
+#include <fstream>
 #include <sstream>
 #include <cstdio>
 #include <cstdarg>
@@ -13,29 +12,31 @@ using std::stringstream;
 
 class easylog;
 // global
-static easylog elog;
-const int BUFF_SIZE=1024*8;
+extern easylog global_log;
+const int LOG_BUFF_SIZE=1024*8;
+const int PL_NAME_SIZE=16;
 
 // enum
 enum printlv// print level
 {
-	ASSERT	= 0,// 断言
-	ERROR	= 1,// 错误
-	WARNING = 2,// 警告
-	INFO	= 3,// 信息
-	DEBUG	= 4,// 调试
-	VERBOSE = 5,// 详细
+	PL_ASSERT	= 0,// 断言
+	PL_ERROR	= 1,// 错误
+	PL_WARNING = 2,// 警告
+	PL_INFO	= 3,// 信息
+	PL_DEBUG	= 4,// 调试
+	PL_VERBOSE = 5,// 详细
+	PL_UNUSED
 };
 
 // assist
-const string PL_NAME[] = {// print level name
-	{"ASSERT"},
-	{"ERROR"},
-	{"WARNING"},
-	{"INFO"},
-	{"DEBUG"},
-	{"VERBOSE"}
-}
+const static char PL_NAME[][PL_NAME_SIZE] = {// print level name
+	{"[ASSERT]"},
+	{"[ERROR]"},
+	{"[WARNING]"},
+	{"[INFO]"},
+	{"[DEBUG]"},
+	{"[VERBOSE]"}
+};
 
 class easylog
 {
@@ -44,12 +45,12 @@ public:
 	easylog()=delete;
 	easylog(easylog&)=delete;
 	easylog(easylog&&)=delete;
+	easylog& operator=(easylog&)=delete;
 	easylog& operator=(easylog&&)=delete;
-	easylog& operator=(const easylog&)=delete;
 	*/
 
 public:
-	easylog(string& log_file)=default;
+	explicit easylog(string& log_file);
 	~easylog();
 
 	/*
@@ -63,8 +64,9 @@ public:
 	 * print a message to log_file or console
 	 * [in 1]: print level
 	 * [in 2]: message
+	 * [out 1]: 0->succ, other->fail
 	 */
-	void write(printlv level, stringstream& message);
+	int write(printlv level, string& message);
 
 	/*
 	 * format print:
@@ -74,9 +76,9 @@ public:
 	 *
 	 * and [ void msg_print(const string&); ] is base function in C++11
 	 */
-	void msg_print(const string& format);
+	void msg_print(const char* message);
 	template<typename T, typename... Args>
-	void msg_print(const string& format, T first, Args... others);
+	void msg_print(const char* format, T first, Args... others);
 
 	/*
 	 * format print is too troublesome to realize,
@@ -84,6 +86,7 @@ public:
 	 * and here use C-style to realize one ver.
 	 * [in 1]: print level
 	 * [in 2]: format string
+	 * [out 1]: 0->succ, other->fail
 	 */
 	int msg_print(printlv level, const char* format, ...);
 
@@ -93,67 +96,62 @@ private:
 	 * [in 1]: print level
 	 * [out 1]: level name
 	 */
-	const string& lv_name(printlv level);
+	const char* plv_name(printlv level);
 
 private:
-	const ofstream m_logfile;
+	ofstream m_logfile;
 	stringstream m_msg;
-	printlv m_level = printlv::INFO;
+	printlv m_level = printlv::PL_INFO;
 	char* m_msg_buff= nullptr;
 };
 
 #define CALL_INFOMATION() \
 ({ \
-	string str = __FILE__ + __func__ + __LINE__; \
-	(str.c_str()); \
+	stringstream ss; \
+	ss << '|' << __FILE__ << ':' << __func__ << ':' << __LINE__ << '|'; \
+	(ss.str()); \
 })
 
-#define LOG_PRINT(level, const char* format, ...) \
-do \
-{ \
-	char msg_buff[BUFF_SIZE] = {}; \
-	stringstream ss; \
-	va_list varg_list; \
-	va_start(varg_list, format); \
-	int num = _vsnprintf(msg_buff, BUFF_SIZE, format, varg_list); \
-	ss << CALL_INFOMATION() << msg_buff; \
-	easylog::write(level, ss); \
+inline void LOG_PRINT(printlv level, const char* format, ...)
+{
+	char msg_buff[LOG_BUFF_SIZE] = {};
+	string str;
+	va_list varg_list;
+	va_start(varg_list, format);
+	int num = vsnprintf(msg_buff, LOG_BUFF_SIZE, format, varg_list);
+	str += CALL_INFOMATION();
+	str += msg_buff;
+	global_log.write(level, str);
+}
+
+#define LOG_ASSERT(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_ASSERT, format, ##__VA_ARGS__); \
 }while(0)
 
-#define LOG_ASSERT(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::ASSERT, format, ##args); \
+#define LOG_ERROR(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_ERROR, format, ##__VA_ARGS__); \
 }while(0)
 
-#define LOG_ERROR(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::ERROR, format, ##args); \
+#define LOG_WARING(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_WARNING, format, ##__VA_ARGS__); \
 }while(0)
 
-#define LOG_WARING(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::WARNING, format, ##args); \
+#define LOG_INFO(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_INFO, format, ##__VA_ARGS__); \
 }while(0)
 
-#define LOG_INFO(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::INFO, format, ##args); \
+#define LOG_DEBUG(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_DEBUG, format, ##__VA_ARGS__); \
 }while(0)
 
-#define LOG_DEBUG(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::DEBUG, format, ##args); \
-}while(0)
-
-#define LOG_VERBOSE(const char* format, ...) \
-do \
-{ \
-	LOG_PRINT(printlv::VERBOSE, format, ##args); \
+#define LOG_VERBOSE(format, ...) \
+do{ \
+	LOG_PRINT(printlv::PL_VERBOSE, format, ##__VA_ARGS__); \
 }while(0)
 
 #endif// _EASYLOG_

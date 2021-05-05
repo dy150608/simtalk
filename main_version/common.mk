@@ -33,10 +33,10 @@ all::$(MAKE_AIM)
 
 PHONY+=$(DEPENDS)
 $(TARGET):$(OBJECTS) 
-	$(CC) $^ -o $@ $(EXTRA) -lstdc++
+	$(CC) $^ -o $@ -lstdc++ $(EXTRA) -D$(BUILD)
 
 %.o:%.c*
-	$(CC) -MM -c $< -o $@ -lstdc++
+	$(CC) -c $< -o $@ -lstdc++ $(EXTRA) -D$(BUILD)
 
 #[[*----- -----*clean role*----- -----*]]
 

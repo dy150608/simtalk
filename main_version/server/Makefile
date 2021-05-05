@@ -3,7 +3,7 @@
 
 AIM:=DIR
 TARGET:=
-DEPENDS:=module
+DEPENDS:=modules
 EXTRA:=
 
 include $(MAKE_COMMON)
