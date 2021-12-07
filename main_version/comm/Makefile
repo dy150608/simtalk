@@ -2,7 +2,7 @@
 
 AIM:=DIR
 TARGET:=
-DEPENDS:=inih json11
+DEPENDS:=json11
 EXTRA:=
 
 include $(MAKE_COMMON)

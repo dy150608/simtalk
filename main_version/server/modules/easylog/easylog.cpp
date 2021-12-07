@@ -1,72 +1,75 @@
-#include <tools/easylog.hpp>
-#include <cstring>
+#include <part/easylog.hpp>
+#include <comm/configure_define.hpp>
 
-easylog::easylog(string& log_file) : m_logfile(ofstream(log_file.c_str(), std::ios::out|std::ios::app))
+using namespace simtalk::part;
+using namespace simtalk::tools;
+
+static easylog LOG(EASYLOG_CONFIG);
+
+easylog::easylog(const char* conf_path)
 {
-	m_msg_buff = new char[LOG_BUFF_SIZE];
-	m_logfile.sync_with_stdio(false);
+	out_buff.insert(new buffer<LOG_BUF_SIZE>);// first buffer
+	out_buff.insert(new buffer<LOG_BUF_SIZE>);// second buffer
 }
 
 easylog::~easylog()
+{}
+
+template<typename... Args>
+void easylog::print(printlv level, const char* format, Args... others)
 {
-	delete[] m_msg_buff;
+#ifdef DEBUG
+	if (level < printlv::PL_ASSERT || level >= printlv::PL_UNUSED) return;
+#elif RELEASE
+	if (level < printlv::PL_ASSERT || level >= printlv::PL_DEBUG) return;
+#endif
+	buffer<ONE_LOG_SIZE> buff;
+	buff << msg_prefix(level);
+	if constexpr (sizeof...(others) == 0)
+	{
+		buff << format;
+	}
+	else
+	{
+		msg_print(buff, format, others...);
+	}
+	buff << '\n';
+
+	std::lock_guard _lock(lock);
+	// TODO
+	// write to out buffer
 }
 
-int easylog::write(printlv level, string& message)
-{
-	const char* plv = plv_name(level);
-	if(plv == nullptr) return -1;
-	m_logfile.write(plv, PL_NAME_SIZE);
-	m_logfile.write(message.c_str(), message.length());
-	return 0;
-}
-
-int easylog::msg_print(printlv level, const char* format, ...)
-{
-	int num = 0;
-	va_list varg_list;
-	va_start(varg_list, format);
-	num = vsnprintf(m_msg_buff, LOG_BUFF_SIZE, format, varg_list);
-	va_end(varg_list);
-
-	const char* plv = plv_name(level);
-	if(plv == nullptr) return -1;
-	m_logfile.write(plv, PL_NAME_SIZE);
-	m_logfile.write(m_msg_buff, LOG_BUFF_SIZE);
-	memset(m_msg_buff, LOG_BUFF_SIZE, 0);
-	return num;
-}
-
-void easylog::msg_print(const char* message)
-{
-	if(message == nullptr) return;
-	m_msg << *message;
-	string tmp = m_msg.str();
-	this->write(m_level, tmp);
-	m_msg.clear();
-}
 template<typename T, typename... Args>
-void easylog::msg_print(const char* format, T first, Args... others)
+void easylog::msg_print(buffer<ONE_LOG_SIZE>& buff, const char* format, T first, Args... others)
 {
 	if(format == nullptr) return;
-	for( ; *format != '\0'; format++ )
+	for( ; *format != '\0'; ++format)
 	{
 		if(*format == '%')
 		{
-			m_msg << first;
-			msg_print(format+1, others...);
-			return;
+			buff << first;
+			if constexpr (sizeof...(others) > 0)
+			{
+				msg_print(buff, format+1, others...);
+				return;
+			}
 		}
-		m_msg << *format;
+		buff << *format;
 	}
 }
 
 const char* easylog::plv_name(printlv level)
 {
-	if(level >= printlv::PL_UNUSED) return nullptr;
-#ifdef RELEASE
-	if(level >= printlv::PL_DEBUG) return nullptr;
-#elif defined DEBUG
-#endif
+	if (level < printlv::PL_ASSERT || level >= printlv::PL_UNUSED) return nullptr;
 	return PL_NAME[static_cast<int>(level)];
+}
+
+buffer<ONE_LOG_SIZE> easylog::msg_prefix(printlv level)
+{
+	buffer<ONE_LOG_SIZE> buff;
+	// date TODO
+	// call function
+	buff << CALL_INFOMATION();
+	return buff;
 }

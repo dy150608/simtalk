@@ -1,9 +1,9 @@
 #!/bin/bash
 #include comm/common.mk
 
-AIM:=DIR
+AIM:=APP
 TARGET:=
-DEPENDS:=easylog tools
-EXTRA:=
+DEPENDS:=transform.cpp
+EXTRA:=-shared -fPIC
 
 include $(MAKE_COMMON)

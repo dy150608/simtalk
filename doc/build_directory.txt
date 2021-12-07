@@ -1,0 +1,7 @@
+/simtalk/
+  |-bin/
+  |-config/
+    |-module/
+      |-easylog.ini
+  |-log/
+  |-script/
