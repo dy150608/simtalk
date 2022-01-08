@@ -3,12 +3,12 @@
 
 CC=gcc
 CXX=g++
-AR=ar rcs
+AR=ar
 MAKE=make
 
 #system variables
-BUILD?=DEBUG
-COMM_FLAG?=-std=c++17
+BUILD_MODE?=DEBUG
+COMM_FLAG?=-std=c++17 -lstdc++
 
 #[[*----- -----*file handing function*----- -----*]]
 
@@ -21,8 +21,12 @@ C_OBJECT:=${patsubst %.c, %.o, $(C_SOURCE)}
 OBJECTS:=$(CXX_OBJECT) $(C_OBJECT)
 
 #[[*----- -----*target rule*----- -----*]]
+ifeq ($(BUILD_MODE), DEBUG)
+	COMM_FLAG+=-g
+endif
+
 TARGET_RULE=
-OBJECT_RULE=$(CC) -c $< -o $@ -lstdc++ $(COMM_FLAG) $(EXTRA) -D$(BUILD)
+OBJECT_RULE=$(CC) -c $< -o $@ -D$(BUILD_MODE) $(COMM_FLAG) $(EXTRA)
 
 ifeq ($(AIM), DIR)
 	MAKE_AIM=dir_rule
@@ -31,9 +35,9 @@ else
 	MAKE_AIM=$(TARGET)
 	CLEAN_AIM=
 ifeq (${suffix $(TARGET)}, .a)
-	TARGET_RULE=ar rcs $(TARGET) $(OBJECTS)
+	TARGET_RULE=$(AR) rcs $(TARGET) $(OBJECTS)
 else
-	TARGET_RULE=$(CC) $^ -o $@ -lstdc++ $(COMM_FLAG) $(EXTRA) -D$(BUILD)
+	TARGET_RULE=$(CC) $^ -o $@ -D$(BUILD_MODE) $(COMM_FLAG) $(EXTRA)
 endif
 endif
 
