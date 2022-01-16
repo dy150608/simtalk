@@ -8,7 +8,6 @@
 
 namespace simtalk
 {
-
 namespace tools
 {
 
@@ -34,29 +33,30 @@ public:
 	
 	T* next() { curr_ = curr_->next_; return current(); }
 
-	size_t size() { return size_; }
+	uint32_t size() { return size_; }
 
-	std::tuple<T*, size_t> insert(T* _res) noexcept;
+	std::tuple<T*, uint32_t> insert(T* _res) noexcept;
 
 private:
-	std::tuple<T*, size_t>
+	std::tuple<T*, uint32_t>
 	first_ins(T* _res)
 	{
 		cycle_node* _new = new cycle_node(_res);
-		_new.next = _new;
+		_new->next_ = _new;
+		curr_ = _new;
 		++size_;
-		return std::make_tuple<T*, size_t>(curr_->next_->res_.get(), size_);
+		return std::make_tuple(curr_->res_.get(), size_); 
 	}
 
 private:
 	cycle_node* curr_;
-	size_t size_;
+	uint32_t size_;
 };
 
 template<typename T>
 cycle<T>::cycle(T* _res) : curr_(nullptr), size_(0)
 {
-	first_ins(std::forward<T>(_res));
+	first_ins(std::forward<T*>(_res));
 }
 
 template<typename T>
@@ -67,13 +67,14 @@ cycle<T>::~cycle()
 	{
 		curr_ = curr_->next_;
 		delete *curr_addr;
-		curr_addr = &curr_;
+		curr_addr = nullptr;
 		--size_;
+		if(curr_ != nullptr) curr_addr = &curr_;
 	}
 }
 
 template<typename T>
-std::tuple<T*, size_t> cycle<T>::insert(T* _res) noexcept
+std::tuple<T*, uint32_t> cycle<T>::insert(T* _res) noexcept
 {
 	// TODO: bad_alloc
 	cycle_node* _new = new cycle_node(_res);
@@ -81,9 +82,10 @@ std::tuple<T*, size_t> cycle<T>::insert(T* _res) noexcept
 	_new->next_ = next;
 	curr_->next_ = _new;
 	++size_;
-	return std::make_tuple<T*, size_t>(curr_->next_->res_.get(), size());
+	return std::make_tuple(curr_->next_->res_.get(), size());
 }
 
 }// namespace:tools
 }// namespace:simtalk
+
 #endif// CYCLE_HPP

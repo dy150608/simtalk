@@ -3,7 +3,6 @@
 
 namespace simtalk
 {
-
 namespace tools
 {
 
@@ -23,4 +22,5 @@ size_t convertHex(char _buff[], uint64_t _value);
 
 }// namespace:tools
 }// namespace:simtalk
+
 #endif// TRANSFORM_HPP

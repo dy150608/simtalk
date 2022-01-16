@@ -16,4 +16,5 @@ protected:
 };
 
 }// namespace:simtalk
+
 #endif// NONCOPYABLE_HPP
