@@ -22,16 +22,18 @@ using namespace simtalk::tools;
 inline const int ONE_LOG_SIZE = 1024*8;
 inline const int LOG_BUF_SIZE = ONE_LOG_SIZE*1024;
 
-// print level define
-inline const int PL_UNDEF	= -1;// 未定义
-inline const int PL_ASSERT	= 0;// 断言
-inline const int PL_ERROR	= 1;// 错误
-inline const int PL_WARNING = 2;// 警告
-inline const int PL_INFO	= 3;// 信息
-inline const int PL_DEBUG	= 4;// 调试
-inline const int PL_VERBOSE = 5;// 详细
-inline const int PL_UNUSED	= 6;// 未使用
-inline const int PL_EXCEPT  = 7;// 日志级别异常
+enum plv
+{// print level define
+	PL_UNDEF = -1,// 未定义
+	PL_ASSERT = 0,// 断言
+	PL_ERROR = 1,// 错误
+	PL_WARNING = 2,// 警告
+	PL_INFO	= 3,// 信息
+	PL_DEBUG = 4,// 调试
+	PL_VERBOSE = 5,// 详细
+	PL_UNUSED = 6,// 未使用
+	PL_EXCEPT = 7,// 日志级别异常
+};
 
 class easylog : noncopyable
 {
@@ -51,7 +53,7 @@ public:
 	 */
 	template<typename... Args>
 	void print(const int _level, const char* _format, Args... _others);
-	
+
 	/*
 	 * format print with C-style
 	 * [in 1]: print level
@@ -59,14 +61,14 @@ public:
 	 * [in ...]: mutable length parameters
 	 */
 	// void print(const int _level, const char* _format, ...);
-	
+
 	const char* msg_data() { return out_buff_.current()->data(); }
 
 private:
 	// suit with print()
 	template<typename T, typename... Args>
 	void msg_print(log_buffer& _buff, const char* _format, T _first, Args... _others);
-	
+
 	/*
 	 * print to buffer
 	 * [in 1]: buffer string data
@@ -91,7 +93,7 @@ buffer1KB time_now();
  * [in 1]: print level
  * [out]: level name
  */
-const char* plv_name(const int level);
+const char* plv_name(plv level);
 
 #define CALL_INFOMATION() \
 ({\
@@ -103,29 +105,28 @@ const char* plv_name(const int level);
 #define LOG_PRINT(_level, _format, args...) \
 do{ \
 	buffer1KB buff; \
-	buff << time_now() << '|'; \
-	constexpr const int level = _level; \
-	buff << '|' << plv_name(level) << '|'; \
-	buff << CALL_INFOMATION() << '|'; \
+	buff << time_now(); \
+	buff << plv_name(_level); \
+	buff << CALL_INFOMATION(); \
 	G_LOG.print(_level, "%" _format, buff.data(), args); \
 }while(0);
 
-#define LOG_ASSERT(_format, args...) LOG_PRINT(PL_ASSERT, _format, args)
-#define LOG_ERROR(_format, args...) LOG_PRINT(PL_ERROR, _format, args)
-#define LOG_WARN(_format, args...) LOG_PRINT(PL_WARNING, _format, args)
-#define LOG_INFO(_format, args...) LOG_PRINT(PL_INFO, _format, args)
-#define LOG_DEBUG(_format, args...) LOG_PRINT(PL_DEBUG, _format, args)
-#define LOG_VERBOSE(_format, args...) LOG_PRINT(PL_VERBOSE, _format, args)
+#define LOG_ASSERT(_format, args...) LOG_PRINT(plv::PL_ASSERT, _format, args)
+#define LOG_ERROR(_format, args...) LOG_PRINT(plv::PL_ERROR, _format, args)
+#define LOG_WARN(_format, args...) LOG_PRINT(plv::PL_WARNING, _format, args)
+#define LOG_INFO(_format, args...) LOG_PRINT(plv::PL_INFO, _format, args)
+#define LOG_DEBUG(_format, args...) LOG_PRINT(plv::PL_DEBUG, _format, args)
+#define LOG_VERBOSE(_format, args...) LOG_PRINT(plv::PL_VERBOSE, _format, args)
 
 /*member function defination*/
 
 template<typename... Args>
-void easylog::print(const int _level, const char* _format, Args... _others)
+void easylog::print(int _level, const char* _format, Args... _others)
 {
 #ifdef DEBUG
-	if(_level <= PL_UNDEF || _level >= PL_UNUSED) return;
+	if(_level <= plv::PL_UNDEF || _level >= plv::PL_UNUSED) return;
 #else
-	if(_level <= PL_UNDEF || _level >= PL_DEBUG) return;
+	if(_level <= plv::PL_UNDEF || _level >= plv::PL_DEBUG) return;
 #endif
 	log_buffer buff;
 	if constexpr (sizeof...(_others) == 0)

@@ -12,7 +12,7 @@ using namespace simtalk::tools;
 namespace simtalk::part
 {
 
-static const char* PL_NAME[PL_EXCEPT] = 
+static const char* PL_NAME[plv::PL_EXCEPT] = 
 {// print level name define
 	"[ASSERT]",
 	"[ERROR]",
@@ -22,12 +22,6 @@ static const char* PL_NAME[PL_EXCEPT] =
 	"[VERBOSE]",
 	"[LV_EXCEPT]"
 };
-
-const char* plv_name(const int _level)
-{
-	if(_level <= PL_UNDEF || _level >= PL_UNUSED) return PL_NAME[PL_EXCEPT-1];
-	return PL_NAME[_level];
-}
 
 buffer1KB time_now()
 {
@@ -40,6 +34,12 @@ buffer1KB time_now()
 	buff << std::put_time(localtime_r(&t_c, &tm_fmt), "%F %T.");
 	buff << micros;
 	return buff;
+}
+
+const char* plv_name(plv _level)
+{
+	if(_level <= plv::PL_UNDEF || _level >= plv::PL_UNUSED) return PL_NAME[plv::PL_EXCEPT-1];
+	return PL_NAME[_level];
 }
 
 /*global logInstance define*/
