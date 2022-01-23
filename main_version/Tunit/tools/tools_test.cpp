@@ -35,8 +35,28 @@ TEST(buffer, append) {
 	buff.append(str, strlen(str));
 	EXPECT_EQ(0, strncmp("hello", buff.data(), buff.size()));
 	buff.clear();
-	buff << 1 << 'a' << 1.2;
-	EXPECT_EQ(0, strncmp("1a1.2", buff.data(), 32));
+	buff << 1 << 'a' << 1.2 << true;
+	EXPECT_EQ(0, strncmp("1a1.21", buff.data(), 32));
+}
+
+TEST(cycle, construct) {
+	cycle<buffer1KB> cc;
+	cycle<buffer1KB> cc1(new buffer1KB);
+
+	cc.insert(new buffer1KB);
+	cc.insert(new buffer1KB);
+	cc1.insert(new buffer1KB);
+	cc1.insert(new buffer1KB);
+}
+
+TEST(cycle, insert) {
+	cycle<buffer1KB> cc;
+	cc.insert(new buffer1KB);
+	cc.insert(new buffer1KB);
+
+	buffer1KB* ptr1 = cc.current();
+	buffer1KB* ptr2 = cc.next();
+	EXPECT_EQ(ptr1, cc.next());
 }
 
 int main(int argc, char** argv)

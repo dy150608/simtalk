@@ -38,17 +38,6 @@ public:
 	std::tuple<T*, uint32_t> insert(T* _res) noexcept;
 
 private:
-	std::tuple<T*, uint32_t>
-	first_ins(T* _res)
-	{
-		cycle_node* _new = new cycle_node(_res);
-		_new->next_ = _new;
-		curr_ = _new;
-		++size_;
-		return std::make_tuple(curr_->res_.get(), size_); 
-	}
-
-private:
 	cycle_node* curr_;
 	uint32_t size_;
 };
@@ -56,7 +45,7 @@ private:
 template<typename T>
 cycle<T>::cycle(T* _res) : curr_(nullptr), size_(0)
 {
-	first_ins(std::forward<T*>(_res));
+	insert(std::forward<T*>(_res));
 }
 
 template<typename T>
@@ -67,7 +56,7 @@ cycle<T>::~cycle()
 	{
 		curr_ = curr_->next_;
 		delete *curr_addr;
-		curr_addr = nullptr;
+		*curr_addr = nullptr;
 		--size_;
 		if(curr_ != nullptr) curr_addr = &curr_;
 	}
@@ -77,10 +66,14 @@ template<typename T>
 std::tuple<T*, uint32_t> cycle<T>::insert(T* _res) noexcept
 {
 	// TODO: bad_alloc
-	cycle_node* _new = new cycle_node(_res);
-	cycle_node* next = curr_->next_;
-	_new->next_ = next;
-	curr_->next_ = _new;
+	cycle_node* ptr= new cycle_node(_res);
+	cycle_node* tmp = ptr;
+
+	if(curr_ != nullptr) tmp = curr_->next_;
+	else curr_ = ptr;
+
+	curr_->next_ = ptr;
+	ptr->next_ = tmp;
 	++size_;
 	return std::make_tuple(curr_->next_->res_.get(), size());
 }

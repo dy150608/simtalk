@@ -15,6 +15,8 @@ class fileopt : noncopyable
 {
 public:
 	fileopt(const char* _path) : ofs_(_path, std::ios::ate) {}
+	~fileopt() { close(); }
+	
 public:
 	/*
 	 * output context to file 
@@ -23,10 +25,11 @@ public:
 	 */
 	void write(const char* _context, int _len)
 	{
-		std::lock_guard lock(lock_);
+		std::lock_guard<std::mutex> lock(lock_);
 		ofs_.write(_context, _len);
 	}
 
+private:
 	/*
 	 * close the file connection
 	 */
