@@ -31,9 +31,12 @@ inline const int PL_INFO	= 3;// 信息
 inline const int PL_DEBUG	= 4;// 调试
 inline const int PL_VERBOSE = 5;// 详细
 inline const int PL_UNUSED	= 6;// 未使用
+inline const int PL_EXCEPT  = 7;// 日志级别异常
 
 class easylog : noncopyable
-{	
+{
+	using log_buffer = buffer<LOG_BUF_SIZE>;
+
 public:
 	explicit easylog(const char* _conf_path);
 	~easylog();
@@ -56,11 +59,13 @@ public:
 	 * [in ...]: mutable length parameters
 	 */
 	// void print(const int _level, const char* _format, ...);
+	
+	const char* msg_data() { return out_buff_.current()->data(); }
 
 private:
 	// suit with print()
 	template<typename T, typename... Args>
-	void msg_print(buffer<ONE_LOG_SIZE>& _buff, const char* _format, T _first, Args... _others);
+	void msg_print(log_buffer& _buff, const char* _format, T _first, Args... _others);
 	
 	/*
 	 * print to buffer
@@ -71,7 +76,7 @@ private:
 
 private:
 	std::mutex lock_;
-	cycle<buffer<LOG_BUF_SIZE>> out_buff_;
+	cycle<log_buffer> out_buff_;
 	fileopt out_file_;
 };
 
@@ -79,7 +84,7 @@ private:
  * get the now time format string
  * [out]: format string
  */
-buffer64B time_now();
+buffer1KB time_now();
 
 /*
  * get the name of print level
@@ -90,14 +95,14 @@ const char* plv_name(const int level);
 
 #define CALL_INFOMATION() \
 ({\
-	buffer128B buff; \
+	buffer1KB buff; \
 	buff << '|' << __FILE__ << ':' << __func__ << ':' << __LINE__ << '|'; \
 	(buff.data()); \
 })
 
 #define LOG_PRINT(_level, _format, args...) \
 do{ \
-	buffer256B buff; \
+	buffer1KB buff; \
 	buff << time_now() << '|'; \
 	constexpr const int level = _level; \
 	buff << '|' << plv_name(level) << '|'; \
@@ -112,8 +117,6 @@ do{ \
 #define LOG_DEBUG(_format, args...) LOG_PRINT(PL_DEBUG, _format, args)
 #define LOG_VERBOSE(_format, args...) LOG_PRINT(PL_VERBOSE, _format, args)
 
-extern easylog G_LOG;
-
 /*member function defination*/
 
 template<typename... Args>
@@ -124,7 +127,7 @@ void easylog::print(const int _level, const char* _format, Args... _others)
 #else
 	if(_level <= PL_UNDEF || _level >= PL_DEBUG) return;
 #endif
-	buffer<ONE_LOG_SIZE> buff;
+	log_buffer buff;
 	if constexpr (sizeof...(_others) == 0)
 	{
 		buff << _format;
@@ -138,7 +141,7 @@ void easylog::print(const int _level, const char* _format, Args... _others)
 }
 
 template<typename T, typename... Args>
-void easylog::msg_print(buffer<ONE_LOG_SIZE>& _buff, const char* _format, T _first, Args... _others)
+void easylog::msg_print(log_buffer& _buff, const char* _format, T _first, Args... _others)
 {
 	if(_format == nullptr) return;
 	static_assert(sizeof...(_others) < 10);// avoid stack overflow
@@ -153,9 +156,12 @@ void easylog::msg_print(buffer<ONE_LOG_SIZE>& _buff, const char* _format, T _fir
 				return;
 			}
 		}
-		_buff << *_format;
+		else _buff << *_format;
 	}
 }
+
+/*extern declare*/
+extern easylog G_LOG;
 
 }// namespace:part
 }// namespace:simtalk

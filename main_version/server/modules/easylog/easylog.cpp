@@ -12,25 +12,27 @@ using namespace simtalk::tools;
 namespace simtalk::part
 {
 
-static const char* PL_NAME[PL_UNUSED] = 
+static const char* PL_NAME[PL_EXCEPT] = 
 {// print level name define
 	"[ASSERT]",
 	"[ERROR]",
 	"[WARNING]",
 	"[INFO]",
 	"[DEBUG]",
-	"[VERBOSE]"
+	"[VERBOSE]",
+	"[LV_EXCEPT]"
 };
 
 const char* plv_name(const int _level)
 {
-	return PL_NAME[_level % PL_UNUSED];
+	if(_level <= PL_UNDEF || _level >= PL_UNUSED) return PL_NAME[PL_EXCEPT-1];
+	return PL_NAME[_level];
 }
 
-buffer64B time_now()
+buffer1KB time_now()
 {
 	using namespace std::chrono;
-	buffer64B buff;
+	buffer1KB buff;
 	tm tm_fmt;
 	auto now_ = system_clock::now();
 	auto micros = duration_cast<microseconds>(now_.time_since_epoch()).count() - duration_cast<seconds>(now_.time_since_epoch()).count()*1000000;
@@ -40,25 +42,29 @@ buffer64B time_now()
 	return buff;
 }
 
-easylog G_LOG(CURRDIR);// global logInstance define
+/*global logInstance define*/
+easylog G_LOG(CURRDIR);
 
 }// namespace:part
 
 easylog::easylog(const char* _conf_path) : out_file_(_conf_path)
 {
-	out_buff_.insert(new buffer<LOG_BUF_SIZE>);// first buffer
-	out_buff_.insert(new buffer<LOG_BUF_SIZE>);// second buffer
+	out_buff_.insert(new log_buffer);// first buffer
+	out_buff_.insert(new log_buffer);// second buffer
 }
 
 easylog::~easylog()
-{}
+{
+	log_buffer* output = out_buff_.current();
+	out_file_.write(output->data(), output->size());
+}
 
 void easylog::buffer_print(const char* _data, int _size)
 {
-	std::lock_guard _lock(lock_);
+	std::lock_guard<std::mutex> _lock(lock_);
 	if(out_buff_.current()->append(_data, _size) != 0)
 	{
-		buffer<LOG_BUF_SIZE>* output = out_buff_.current();
+		log_buffer* output = out_buff_.current();
 		out_file_.write(output->data(), output->size());
 		out_buff_.next();// TODO
 		out_buff_.current()->append(_data,_size);
